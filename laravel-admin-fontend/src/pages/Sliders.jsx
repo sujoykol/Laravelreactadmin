@@ -5,102 +5,102 @@ import toast from "react-hot-toast";
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-export default function Products() {
-  const [products, setProducts] = useState([]);
+export default function Sliders() {
+  const [sliders, setSliders] = useState([]);
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async (page = 1) => {
+  const fetchSliders = async (page = 1) => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/products?page=${page}`, {
+      const { data } = await axios.get(`${API_BASE_URL}/sliders?page=${page}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      setProducts(data.data);
+      setSliders(data.data);
       setPagination({
         current: data.current_page,
         total: data.last_page
       });
     } catch  {
-      toast.error("Failed to fetch products ❌");
+      toast.error("Failed to fetch sliders ❌");
     }
     setLoading(false);
   };
 
-  const deleteProduct = async (id) => {
+  const deleteSlider = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/products/${id}`, {
+      await axios.delete(`${API_BASE_URL}/sliders/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      toast.success("Product deleted ✅");
-      fetchProducts(pagination.current);
+      toast.success("Slider deleted ✅");
+      fetchSliders(pagination.current);
     } catch {
       toast.error("Failed to delete ❌");
     }
   };
-   const toggleStatus = async (id) => {
+
+  const toggleStatus = async (id) => {
     try {
       const { data } = await axios.patch(
-        `${API_BASE_URL}/products/${id}/toggle-status`,
+        `${API_BASE_URL}/sliders/${id}/toggle-status`,
         {},
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
       toast.success(data.message);
-      fetchProducts();
+      fetchSliders(); // refresh list
     } catch  {
       toast.error("Failed to update status ❌");
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchSliders();
   }, []);
 
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between mb-3">
-        <h2>Products</h2>
-        <Link to="/products/new" className="btn btn-primary">+ Add Product</Link>
+        <h2>Sliders</h2>
+        <Link to="/sliders/new" className="btn btn-primary">+ Add Slider</Link>
       </div>
 
       {loading ? <p>Loading...</p> : (
         <table className="table table-bordered table-hover">
           <thead className="table-light">
             <tr>
-              <th>ID</th><th>Name</th><th>Price</th><th>Description</th><th>Image</th><th>Status</th><th>Actions</th>
+              <th>ID</th><th>Name</th><th>Description</th><th>Image</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {products.length > 0 ? products.map((p) => (
-              <tr key={p.id}>
-                <td>{p.id}</td>
-                <td>{p.name}</td>
-                <td>${p.price}</td>
-                <td>{p.description}</td>
+            {sliders.length > 0 ? sliders.map((s) => (
+              <tr key={s.id}>
+                <td>{s.id}</td>
+                <td>{s.title}</td>
+                <td>{s.description}</td>
                 <td>
-                  {p.image ? (
-                    <img src={`http://127.0.0.1:8000/storage/${p.image}`} alt="" width="50" />
+                  {s.image ? (
+                    <img src={`http://127.0.0.1:8000/storage/${s.image}`} alt="" width="50" />
                   ) : "No Image"}
                 </td>
-                 <td>
+                  <td>
                 <div className="form-check form-switch">
                   <input
                     className="form-check-input"
                     type="checkbox"
-                    checked={p.status === 1}
-                    onChange={() => toggleStatus(p.id)}
+                    checked={s.status === 1}
+                    onChange={() => toggleStatus(s.id)}
                   />
                 </div>
               </td>
                 <td>
-                  <Link to={`/products/edit/${p.id}`} className="btn btn-sm btn-warning me-2">Edit</Link>
-                  <button onClick={() => deleteProduct(p.id)} className="btn btn-sm btn-danger">Delete</button>
+                  <Link to={`/sliders/edit/${s.id}`} className="btn btn-sm btn-warning me-2">Edit</Link>
+                  <button onClick={() => deleteSlider(s.id)} className="btn btn-sm btn-danger">Delete</button>
                 </td>
               </tr>
-            )) : <tr><td colSpan="7" className="text-center">No products found</td></tr>}
+            )) : <tr><td colSpan="6" className="text-center">No sliders found</td></tr>}
           </tbody>
         </table>
       )}
@@ -110,7 +110,7 @@ export default function Products() {
         <ul className="pagination">
           {Array.from({ length: pagination.total }, (_, i) => (
             <li key={i+1} className={`page-item ${pagination.current === i+1 ? "active" : ""}`}>
-              <button className="page-link" onClick={() => fetchProducts(i+1)}>{i+1}</button>
+              <button className="page-link" onClick={() => fetchSliders(i+1)}>{i+1}</button>
             </li>
           ))}
         </ul>

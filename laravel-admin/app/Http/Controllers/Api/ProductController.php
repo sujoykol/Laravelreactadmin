@@ -65,6 +65,16 @@ class ProductController extends Controller
             'product' => $product
         ]);
     }
+      public function toggleStatus(Product $product)
+{
+    $product->status = !$product->status;
+    $product->save();
+
+    return response()->json([
+        'message' => 'Product status updated successfully',
+        'status' => $product->status
+    ]);
+}
 
     // Delete product
     public function destroy(Product $product) {
