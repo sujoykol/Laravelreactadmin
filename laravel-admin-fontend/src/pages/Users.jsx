@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form } from "react-bootstrap";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import {
+    getUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+    getRoles,
+    assignRole,
+} from "../services/userService";
 
 export default function Users() {
 
@@ -15,19 +22,23 @@ export default function Users() {
 
   // Fetch users
   const fetchUsers = async () => {
-    const res = await axios.get("http://127.0.0.1:8000/api/users", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    setUsers(res.data);
-  };
+    try {
+        const data = await getUsers();
+        setUsers(data);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to fetch users");
+    }
+};
 
   // Fetch roles
-  const fetchRoles = async () => {
-    const res = await axios.get("http://127.0.0.1:8000/api/roles", {
-       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    setRoles(res.data);
-  };
+   const fetchRoles = async () => {
+    try {
+        const data = await getRoles();
+        setRoles(data);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to fetch roles");
+    }
+};
 
   useEffect(() => {
     fetchUsers();
@@ -48,54 +59,64 @@ export default function Users() {
   const handleClose = () => setShow(false);
 
   // Save user
-  const handleSave = async () => {
+   const handleSave = async () => {
     try {
-      if (editUser) {
-        await axios.put(`http://127.0.0.1:8000/api/users/${editUser.id}`, form, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        let user;
 
-        if (form.role) {
-         // alert(form.role);
-          await axios.post(
-            `http://127.0.0.1:8000/api/users/${editUser.id}/assign-role`,
-            { role: form.role },
-            { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-          );
+        if (editUser) {
+            await updateUser(editUser.id, form);
+
+            if (form.role) {
+                await assignRole(editUser.id, form.role);
+            }
+
+            toast.success("User updated successfully");
+        } else {
+            user = await createUser(form);
+
+            if (form.role) {
+                await assignRole(user.id, form.role);
+            }
+
+            toast.success("User created successfully");
         }
-        toast.success("User Updated ✅");
-      } else {
-        const res = await axios.post("http://127.0.0.1:8000/api/users", form, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
 
-        if (form.role) {
-          await axios.post(
-            `http://127.0.0.1:8000/api/users/${res.data.id}/assign-role`,
-            { role: form.role },
-            { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-          );
-        }
-        toast.success("User Added ✅");
-      }
+        handleClose();
+        fetchUsers();
 
-      fetchUsers();
-      handleClose();
     } catch (err) {
-       toast.error(err.response?.data?.message || "Failed to save user ❌");
-      console.error(err);
+
+        if (err.response?.data?.errors) {
+            Object.values(err.response.data.errors).forEach(messages =>
+                toast.error(messages[0])
+            );
+        } else {
+            toast.error(err.response?.data?.message || "Failed to save user");
+        }
     }
-  };
+};
 
   // Delete user
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    await axios.delete(`http://127.0.0.1:8000/api/users/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    toast.success("User Deleted ✅");
-    fetchUsers();
-  };
+   const handleDelete = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete this user?")) {
+        return;
+    }
+
+    try {
+
+        await deleteUser(id);
+
+        toast.success("User deleted successfully");
+
+        fetchUsers();
+
+    } catch (err) {
+
+        toast.error(err.response?.data?.message || "Failed to delete user");
+
+    }
+};
 
   return (
     <div className="container mt-4">

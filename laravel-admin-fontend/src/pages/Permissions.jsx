@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Spinner } from "react-bootstrap";
-import axios from "axios";
+import {
+    getPermissions,
+    createPermission,
+    updatePermission,
+    deletePermission,
+} from "../services/permissionService";
 import toast from "react-hot-toast";
 
-const API = "http://127.0.0.1:8000/api";
-const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("access_token")}` });
 
 export default function Permissions() {
   const [permissions, setPermissions] = useState([]);
@@ -14,17 +17,18 @@ export default function Permissions() {
   const [editing, setEditing] = useState(null);
   const [permName, setPermName] = useState("");
 
-  const fetchPermissions = async () => {
+   const fetchPermissions = async () => {
     setLoading(true);
+
     try {
-      const res = await axios.get(`${API}/permissions`, { headers: authHeader() });
-      setPermissions(res.data || []);
-    } catch {
-      toast.error("Failed to load permissions");
+        const data = await getPermissions();
+        setPermissions(data);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to load permissions");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   useEffect(() => { fetchPermissions(); }, []);
 
@@ -41,32 +45,60 @@ export default function Permissions() {
   };
 
   const savePermission = async () => {
-    try {
-      if (!permName.trim()) return toast.error("Permission name is required");
-      if (editing) {
-        await axios.put(`${API}/permissions/${editing.id}`, { name: permName }, { headers: authHeader() });
-        toast.success("Permission updated");
-      } else {
-        await axios.post(`${API}/permissions`, { name: permName }, { headers: authHeader() });
-        toast.success("Permission created");
-      }
-      setShow(false);
-      fetchPermissions();
-    } catch {
-      toast.error("Save failed");
+    if (!permName.trim()) {
+        toast.error("Permission name is required");
+        return;
     }
-  };
+
+    try {
+        if (editing) {
+            await updatePermission(editing.id, {
+                name: permName,
+            });
+
+            toast.success("Permission updated successfully");
+        } else {
+            await createPermission({
+                name: permName,
+            });
+
+            toast.success("Permission created successfully");
+        }
+
+        setShow(false);
+        setEditing(null);
+        setPermName("");
+
+        fetchPermissions();
+
+    } catch (err) {
+
+        if (err.response?.data?.errors) {
+            Object.values(err.response.data.errors).forEach(messages =>
+                toast.error(messages[0])
+            );
+        } else {
+            toast.error(err.response?.data?.message || "Save failed");
+        }
+    }
+};
 
   const removePermission = async (id) => {
-    if (!window.confirm("Delete this permission?")) return;
-    try {
-      await axios.delete(`${API}/permissions/${id}`, { headers: authHeader() });
-      toast.success("Permission deleted");
-      fetchPermissions();
-    } catch {
-      toast.error("Delete failed");
+    if (!window.confirm("Are you sure you want to delete this permission?")) {
+        return;
     }
-  };
+
+    try {
+        await deletePermission(id);
+
+        toast.success("Permission deleted successfully");
+
+        fetchPermissions();
+
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Delete failed");
+    }
+};
 
   return (
     <div className="container mt-4">
