@@ -1,53 +1,87 @@
 import { createContext, useState } from "react";
-import axios from "axios";
+import { loginUser, changePassword } from "../services/authService";
+import { setToken, clearToken } from "../utils/storage";
 import toast from "react-hot-toast";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const API_BASE_URL = "http://127.0.0.1:8000/api";
+export function AuthProvider({ children }) {
+    const [user, setUser] = useState(null);
 
-  const login = async (email, password) => {
-    const { data } = await axios.post(API_BASE_URL+"/login", { email, password });
-    localStorage.setItem("token", data.token);
-    setUser(data.user);
-  };
+    const login = async (email, password) => {
+        const data = await loginUser({
+            email,
+            password,
+        });
 
-  const logout = async () => {
-    await axios.post(API_BASE_URL+"/logout", {}, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    localStorage.removeItem("token");
-    setUser(null);
-    toast.success("Logged out successfully 👋");
-  };
+        // Store Sanctum token
+        setToken(data.token);
 
-   const changePassword = async (oldPassword, newPassword, confirmPassword) => {
+        // Store logged-in user
+        setUser(data.user);
+
+        return data;
+    };
+
+    const logout = () => {
+        clearToken();
+        setUser(null);
+    };
+
+    const changeUserPassword = async (
+    currentPassword,
+    newPassword,
+    confirmPassword
+) => {
     try {
-      const { data } = await axios.post(
-        API_BASE_URL + "/change-password",
-        {
-          old_password: oldPassword,
-          new_password: newPassword,
-          new_password_confirmation: confirmPassword,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      toast.success(data.message || "Password changed successfully ✅");
-      return true; // ✅ success
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to change password ❌");
-       return false; // ❌ failure
-    }
-  };
+        const response = await changePassword({
+            old_password: currentPassword,
+            new_password: newPassword,
+            new_password_confirmation: confirmPassword,
+        });
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, changePassword }}>
-      {children}
-    </AuthContext.Provider>
-  );
+        toast.success(response.message || "Password changed successfully");
+
+        return {
+            success: true,
+            data: response,
+        };
+
+    } catch (error) {
+
+        const response = error.response?.data;
+
+        if (response?.errors) {
+            Object.values(response.errors).forEach((messages) => {
+                toast.error(messages[0]);
+            });
+        } 
+        else if (response?.message) {
+            toast.error(response.message);
+        } 
+        else {
+            toast.success("Failed to change password");
+        }
+
+        return {
+            success: false,
+            error: response,
+        };
+    }
 };
 
+
+
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                login,
+                logout,
+                changeUserPassword,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}

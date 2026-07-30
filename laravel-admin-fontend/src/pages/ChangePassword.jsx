@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const ChangePasswordForm = () => {
-  const { changePassword } = useContext(AuthContext);
+  const { changeUserPassword } = useContext(AuthContext);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,7 +14,8 @@ const ChangePasswordForm = () => {
     if(oldPassword ==="" || newPassword ==="" || confirmPassword ===""){
       toast.error("All fields are required");
     }else {
-    const success = await changePassword(oldPassword, newPassword, confirmPassword);
+
+    const success = await changeUserPassword(oldPassword, newPassword, confirmPassword);
     if (success) {
       navigate("/dashboard"); // ✅ redirect on success
     } 

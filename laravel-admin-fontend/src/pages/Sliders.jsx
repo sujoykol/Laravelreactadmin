@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import {
+    getSliders,
+    deleteSlider,
+    toggleSliderStatus
+} from "../services/sliderService";
 
 export default function Sliders() {
   const [sliders, setSliders] = useState([]);
@@ -11,50 +13,66 @@ export default function Sliders() {
   const [loading, setLoading] = useState(true);
 
   const fetchSliders = async (page = 1) => {
+
     setLoading(true);
-    try {
-      const { data } = await axios.get(`${API_BASE_URL}/sliders?page=${page}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setSliders(data.data);
-      setPagination({
-        current: data.current_page,
-        total: data.last_page
-      });
-    } catch  {
-      toast.error("Failed to fetch sliders ❌");
-    }
-    setLoading(false);
-  };
 
-  const deleteSlider = async (id) => {
+    try {
+
+        const data = await getSliders(page);
+
+        setSliders(data.data);
+
+        setPagination({
+            current: data.current_page,
+            total: data.last_page
+        });
+
+    } catch (error) {
+
+        toast.error("Failed to fetch sliders ❌");
+
+    } finally {
+
+        setLoading(false);
+
+    }
+};
+
+ const handleDelete = async (id) => {
+
     if (!window.confirm("Are you sure?")) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/sliders/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      toast.success("Slider deleted ✅");
-      fetchSliders(pagination.current);
-    } catch {
-      toast.error("Failed to delete ❌");
-    }
-  };
 
-  const toggleStatus = async (id) => {
     try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/sliders/${id}/toggle-status`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      toast.success(data.message);
-      fetchSliders(); // refresh list
-    } catch  {
-      toast.error("Failed to update status ❌");
+
+        await deleteSlider(id);
+
+        toast.success("Slider deleted ✅");
+
+        fetchSliders(pagination.current);
+
+    } catch(error) {
+
+        toast.error("Failed to delete ❌");
+
     }
-  };
+};
+
+ const handleToggleStatus = async (id) => {
+
+    try {
+
+        const data = await toggleSliderStatus(id);
+
+        toast.success(data.message);
+
+        fetchSliders();
+
+    } catch(error) {
+
+        toast.error("Failed to update status ❌");
+
+    }
+};
 
   useEffect(() => {
     fetchSliders();
@@ -91,13 +109,13 @@ export default function Sliders() {
                     className="form-check-input"
                     type="checkbox"
                     checked={s.status === 1}
-                    onChange={() => toggleStatus(s.id)}
+                    onChange={() => handleToggleStatus(s.id)}
                   />
                 </div>
               </td>
                 <td>
                   <Link to={`/sliders/edit/${s.id}`} className="btn btn-sm btn-warning me-2">Edit</Link>
-                  <button onClick={() => deleteSlider(s.id)} className="btn btn-sm btn-danger">Delete</button>
+                  <button onClick={() => handleDelete(s.id)} className="btn btn-sm btn-danger">Delete</button>
                 </td>
               </tr>
             )) : <tr><td colSpan="6" className="text-center">No sliders found</td></tr>}

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -10,7 +10,12 @@ class RoleController extends Controller
 {
     public function index()
     {
-        return response()->json(Role::with('permissions')->get());
+       
+    return response()->json(
+        Role::all()
+    );
+
+        //return response()->json(Role::with('permissions')->get());
     }
 
     public function store(Request $request)
@@ -26,10 +31,14 @@ class RoleController extends Controller
         return response()->json($role);
     }
 
-    public function destroy($id)
-    {
-        Role::destroy($id);
-        return response()->json(['message' => 'Role deleted']);
+    public function destroy($id){
+        $role = Role::findOrFail($id);
+
+        $role->delete();
+
+        return response()->json([
+            'message' => 'Role deleted successfully'
+        ]);
     }
 
     public function givePermission(Request $request, $id)

@@ -1,11 +1,16 @@
 import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import {
+ getCategories,
+ createCategory,
+ updateCategory,
+ deleteCategory,
+ toggleCategoryStatus
+} from "../services/categoryService";
 import axios from "axios";
 import { Modal, Button, Form } from "react-bootstrap";
 import toast from "react-hot-toast";
 
 const Category = () => {
-    const { user } = useContext(AuthContext);
     const [categories, setCategories] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
@@ -14,14 +19,12 @@ const Category = () => {
     const [page, setPage] = useState(1);
     const [lastPage, setLastPage] = useState(1);
 
-    const API_BASE_URL = "http://127.0.0.1:8000/api";
+  
 
     // Fetch categories
     const fetchCategories = async (pageNum = 1) => {
         try {
-            const { data } = await axios.get(`${API_BASE_URL}/categories?page=${pageNum}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            });
+            const data = await getCategories(pageNum);
             setCategories(data.data);
             setPage(data.current_page);
             setLastPage(data.last_page);
@@ -53,19 +56,23 @@ const Category = () => {
         try {
             if (editingCategory) {
                 // Update
-                await axios.put(
-                    `${API_BASE_URL}/categories/${editingCategory.id}`,
-                    { name, status },
-                    { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                await updateCategory(
+                    editingCategory.id,
+                    {
+                        name,
+                        status
+                    }
                 );
                 toast.success("Category updated ✅");
             } else {
                 // Create
-                await axios.post(
-                    `${API_BASE_URL}/categories`,
-                    { name, status },
-                    { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                  await createCategory(
+                    {
+                        name,
+                        status
+                    }
                 );
+
                 toast.success("Category added ✅");
             }
             setShowModal(false);
@@ -79,9 +86,7 @@ const Category = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure?")) return;
         try {
-            await axios.delete(`${API_BASE_URL}/categories/${id}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            });
+            await deleteCategory(id);
             toast.success("Category deleted 🗑️");
             fetchCategories(page);
         } catch  {
@@ -92,9 +97,7 @@ const Category = () => {
     // Toggle status
     const toggleStatus = async (id) => {
         try {
-            await axios.patch(`${API_BASE_URL}/categories/${id}/toggle-status`, {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            });
+            await toggleCategoryStatus(id);
             toast.success("Status updated 🔄");
             fetchCategories(page);
         } catch  {

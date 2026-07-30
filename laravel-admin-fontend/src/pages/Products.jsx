@@ -2,62 +2,63 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import {
+    getProducts,
+    deleteProduct,
+    toggleProductStatus,
+} from "../services/productService";
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState([]);
+    const [pagination, setPagination] = useState({});
+    const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async (page = 1) => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(`${API_BASE_URL}/products?page=${page}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setProducts(data.data);
-      setPagination({
-        current: data.current_page,
-        total: data.last_page
-      });
-    } catch  {
-      toast.error("Failed to fetch products ❌");
-    }
-    setLoading(false);
-  };
+    const fetchProducts = async (page = 1) => {
+        setLoading(true);
 
-  const deleteProduct = async (id) => {
+        try {
+            const data = await getProducts(page);
+
+            setProducts(data.data);
+
+            setPagination({
+                current: data.current_page,
+                total: data.last_page,
+            });
+        } catch (error) {
+            toast.error("Failed to fetch products ❌");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/products/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      toast.success("Product deleted ✅");
-      fetchProducts(pagination.current);
-    } catch {
-      toast.error("Failed to delete ❌");
+        await deleteProduct(id);
+        toast.success("Product deleted ✅");
+        fetchProducts(pagination.current);
+    } catch (err) {
+        console.log(err.response);
+        toast.error("Failed to delete ❌");
     }
-  };
-   const toggleStatus = async (id) => {
-    try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/products/${id}/toggle-status`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      toast.success(data.message);
-      fetchProducts();
-    } catch  {
-      toast.error("Failed to update status ❌");
-    }
-  };
+};
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+    const toggleStatus = async (id) => {
+        try {
+            const data = await toggleProductStatus(id);
+
+            toast.success(data.message);
+
+            fetchProducts(pagination.current);
+        } catch (error) {
+            toast.error("Failed to update status ❌");
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
 
   return (
     <div className="container mt-4">
@@ -97,7 +98,7 @@ export default function Products() {
               </td>
                 <td>
                   <Link to={`/products/edit/${p.id}`} className="btn btn-sm btn-warning me-2">Edit</Link>
-                  <button onClick={() => deleteProduct(p.id)} className="btn btn-sm btn-danger">Delete</button>
+                  <button onClick={() => handleDelete(p.id)} className="btn btn-sm btn-danger">Delete</button>
                 </td>
               </tr>
             )) : <tr><td colSpan="7" className="text-center">No products found</td></tr>}

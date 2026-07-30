@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
+import { getImageUrl } from "../utils/image";
+
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import {
+    getProduct,
+    createProduct,
+    updateProduct,
+} from "../services/productService";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -13,15 +19,24 @@ export default function ProductForm() {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    if (id) {
-      axios.get(`${API_BASE_URL}/products/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      }).then(res => {
-        setForm({ ...res.data, image: null });
-        setPreview(res.data.image ? `http://127.0.0.1:8000/storage/${res.data.image}` : null);
-      });
-    }
-  }, [id]);
+    const loadProduct = async () => {
+        if (!id) return;
+
+        try {
+            const data = await getProduct(id);
+
+            setForm({
+                ...data,
+                image: null,
+            });
+            setPreview(getImageUrl(data.image));
+        } catch (error) {
+            toast.error("Failed to load product ❌");
+        }
+    };
+
+    loadProduct();
+}, [id]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -42,16 +57,12 @@ export default function ProductForm() {
     if (form.image) formData.append("image", form.image);
 
     try {
-      if (id) {
-        await axios.post(`${API_BASE_URL}/products/${id}?_method=PUT`, formData, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        toast.success("Product updated ✅");
+     if (id) {
+          await updateProduct(id, formData);
+          toast.success("Product updated ✅");
       } else {
-        await axios.post(`${API_BASE_URL}/products`, formData, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        toast.success("Product created ✅");
+          await createProduct(formData);
+          toast.success("Product created ✅");
       }
       navigate("/products");
     } catch (err){

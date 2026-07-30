@@ -4,7 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const API = "http://127.0.0.1:8000/api";
-const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
+const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("access_token")}` });
 
 export default function Permissions() {
   const [permissions, setPermissions] = useState([]);

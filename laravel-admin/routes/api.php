@@ -6,11 +6,12 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
-use App\Http\Controllers\API\RoleController;
-use App\Http\Controllers\API\PermissionController;
-use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\UserController;
 
 Route::post('/login', [AuthController::class, 'login']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);

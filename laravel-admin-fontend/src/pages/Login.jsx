@@ -3,11 +3,12 @@ import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
+
 export default function Login() {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,8 +16,12 @@ export default function Login() {
       await login(email, password);
        toast.success(`Welcome back`);
       navigate("/dashboard");
-    } catch  {
-      toast.error("Invalid credentials. Please try again.");
+    } catch(error) {
+
+      toast.error(
+        "Invalid credentials. Please try again."
+      );
+
     }
   };
 

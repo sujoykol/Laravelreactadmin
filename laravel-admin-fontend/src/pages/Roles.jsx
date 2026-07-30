@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Badge, Spinner } from "react-bootstrap";
-import axios from "axios";
+import {
+    getRoles,
+    getPermissions,
+    createRole,
+    updateRole,
+    deleteRole,
+    givePermission,
+    revokePermission,
+} from "../services/roleService";
 import toast from "react-hot-toast";
 
-const API = "http://127.0.0.1:8000/api";
-const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
 export default function Roles() {
   const [roles, setRoles] = useState([]);
@@ -23,20 +29,30 @@ export default function Roles() {
   const [savingPerms, setSavingPerms] = useState(false);
 
   const fetchAll = async () => {
+
     setLoading(true);
+
     try {
-      const [rRes, pRes] = await Promise.all([
-        axios.get(`${API}/roles`, { headers: authHeader() }),
-        axios.get(`${API}/permissions`, { headers: authHeader() }),
-      ]);
-      setRoles(rRes.data || []);
-      setPermissions(pRes.data || []);
+
+        const [roles, permissions] = await Promise.all([
+            getRoles(),
+            getPermissions(),
+        ]);
+
+        setRoles(roles);
+        setPermissions(permissions);
+
     } catch {
-      toast.error("Failed to load roles/permissions");
+
+        toast.error("Failed to load roles");
+
     } finally {
-      setLoading(false);
+
+        setLoading(false);
+
     }
-  };
+
+};
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -52,33 +68,72 @@ export default function Roles() {
     setShowRoleModal(true);
   };
 
-  const saveRole = async () => {
-    try {
-      if (!roleName.trim()) return toast.error("Role name is required");
-      if (editingRole) {
-        await axios.put(`${API}/roles/${editingRole.id}`, { name: roleName }, { headers: authHeader() });
-        toast.success("Role updated");
-      } else {
-        await axios.post(`${API}/roles`, { name: roleName }, { headers: authHeader() });
-        toast.success("Role created");
-      }
-      setShowRoleModal(false);
-      fetchAll();
-    } catch {
-      toast.error("Save failed");
-    }
-  };
+ const saveRole = async () => {
 
-  const removeRole = async (id) => {
-    if (!window.confirm("Delete this role?")) return;
-    try {
-      await axios.delete(`${API}/roles/${id}`, { headers: authHeader() });
-      toast.success("Role deleted");
-      fetchAll();
-    } catch {
-      toast.error("Delete failed");
+    if (!roleName.trim()) {
+        toast.error("Role name is required");
+        return;
     }
-  };
+
+    try {
+
+        if (editingRole) {
+
+            await updateRole(
+                editingRole.id,
+                {
+                    name: roleName,
+                }
+            );
+
+            toast.success("Role updated");
+
+        } else {
+
+            await createRole({
+                name: roleName,
+            });
+
+            toast.success("Role created");
+
+        }
+
+        setShowRoleModal(false);
+
+        fetchAll();
+
+    } catch (error) {
+
+        toast.error(
+            error.response?.data?.message ||
+            "Save failed"
+        );
+
+    }
+
+};
+
+  const handleDeleteRole = async (id) => {
+
+    if (!window.confirm("Delete this role?")) {
+        return;
+    }
+
+    try {
+
+        await deleteRole(id);
+
+        toast.success("Role deleted");
+
+        fetchAll();
+
+    } catch {
+
+        toast.error("Delete failed");
+
+    }
+
+};
 
   const openManagePerms = (role) => {
     setRoleForPerms(role);
@@ -95,41 +150,65 @@ export default function Roles() {
   };
 
   const saveRolePermissions = async () => {
-    if (!roleForPerms) return;
-    setSavingPerms(true);
-    try {
-      const current = new Set((roleForPerms.permissions || []).map((p) => p.name));
-      // find differences
-      const toGive = [...selectedPerms].filter((p) => !current.has(p));
-      const toRevoke = [...current].filter((p) => !selectedPerms.has(p));
 
-      // perform API calls
-      await Promise.all([
-        ...toGive.map((p) =>
-          axios.post(
-            `${API}/roles/${roleForPerms.id}/give-permission`,
-            { permission: p },
-            { headers: authHeader() }
-          )
-        ),
-        ...toRevoke.map((p) =>
-          axios.post(
-            `${API}/roles/${roleForPerms.id}/revoke-permission`,
-            { permission: p },
-            { headers: authHeader() }
-          )
-        ),
-      ]);
-
-      toast.success("Permissions updated");
-      setShowPermModal(false);
-      fetchAll();
-    } catch {
-      toast.error("Failed to update permissions");
-    } finally {
-      setSavingPerms(false);
+    if (!roleForPerms) {
+        return;
     }
-  };
+
+    setSavingPerms(true);
+
+    try {
+
+        const current = new Set(
+            (roleForPerms.permissions || [])
+                .map((p) => p.name)
+        );
+
+        const toGive = [...selectedPerms]
+            .filter((p) => !current.has(p));
+
+        const toRevoke = [...current]
+            .filter((p) => !selectedPerms.has(p));
+
+        await Promise.all([
+
+            ...toGive.map((permission) =>
+                givePermission(
+                    roleForPerms.id,
+                    permission
+                )
+            ),
+
+            ...toRevoke.map((permission) =>
+                revokePermission(
+                    roleForPerms.id,
+                    permission
+                )
+            ),
+
+        ]);
+
+        toast.success(
+            "Permissions updated"
+        );
+
+        setShowPermModal(false);
+
+        fetchAll();
+
+    } catch {
+
+        toast.error(
+            "Failed to update permissions"
+        );
+
+    } finally {
+
+        setSavingPerms(false);
+
+    }
+
+};
 
   return (
     <div className="container mt-4">
@@ -173,7 +252,7 @@ export default function Roles() {
                   <Button size="sm" variant="warning" className="me-2" onClick={() => openEditRole(r)}>
                     Edit
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => removeRole(r.id)}>
+                  <Button size="sm" variant="danger" onClick={() => handleDeleteRole(r.id)}>
                     Delete
                   </Button>
                 </td>

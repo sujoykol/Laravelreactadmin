@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Table, Button, Modal, Form, Image } from "react-bootstrap";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { AuthContext } from "../context/AuthContext";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import {
+    getCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+    toggleCustomerStatus,
+} from "../services/customerService";
 
 const Customer = () => {
   const { user } = useContext(AuthContext);
@@ -20,16 +24,14 @@ const Customer = () => {
   });
 
   // Fetch customers
-  const fetchCustomers = async () => {
+const fetchCustomers = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/customers`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setCustomers(data.data || data); // depends on Laravel resource response
-    } catch (err) {
-      toast.error("Failed to fetch customers ❌");
+        const data = await getCustomers();
+        setCustomers(data.data || data);
+    } catch {
+        toast.error("Failed to fetch customers ❌");
     }
-  };
+};
 
   useEffect(() => {
     fetchCustomers();
@@ -56,66 +58,101 @@ const Customer = () => {
   };
 
   // Delete customer
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete?")) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/customers/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      toast.success("Customer deleted ✅");
-      fetchCustomers();
-    } catch (err) {
-      toast.error("Delete failed ❌");
+ const handleDelete = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete?")) {
+        return;
     }
-  };
+
+    try {
+
+        await deleteCustomer(id);
+
+        toast.success("Customer deleted ✅");
+
+        fetchCustomers();
+
+    } catch {
+
+        toast.error("Delete failed ❌");
+
+    }
+
+};
 
   // Submit form
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     const form = new FormData();
+
     form.append("name", formData.name);
     form.append("email", formData.email);
     form.append("phone", formData.phone);
     form.append("status", formData.status);
-    if (formData.image) form.append("image", formData.image);
+
+    if (formData.image) {
+        form.append("image", formData.image);
+    }
 
     try {
-      if (editId) {
-        await axios.post(`${API_BASE_URL}/customers/${editId}?_method=PUT`, form, {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data"
-          },
-        });
-        toast.success("Customer updated ✅");
-      } else {
-        await axios.post(`${API_BASE_URL}/customers`, form, {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data"
-          },
-        });
-        toast.success("Customer added ✅");
-      }
-      setShow(false);
-      fetchCustomers();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Save failed ❌");
-    }
-  };
-  // Toggle status
-    const toggleStatus = async (id) => {
-        try {
-            await axios.patch(`${API_BASE_URL}/customers/${id}/toggle-status`, {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            });
-            toast.success("Status updated 🔄");
-            fetchCustomers();
-        } catch  {
-            toast.error("Failed to toggle status ❌");
+
+        if (editId) {
+
+            await updateCustomer(editId, form);
+
+            toast.success("Customer updated ✅");
+
+        } else {
+
+            await createCustomer(form);
+
+            toast.success("Customer added ✅");
+
         }
-    };
+
+        setShow(false);
+
+        fetchCustomers();
+
+    } catch (err) {
+
+        if (err.response?.data?.errors) {
+
+            Object.values(err.response.data.errors)
+                .flat()
+                .forEach((message) => toast.error(message));
+
+        } else {
+
+            toast.error(
+                err.response?.data?.message || "Save failed ❌"
+            );
+
+        }
+
+    }
+
+};
+  // Toggle status
+    const handleToggleStatus = async (id) => {
+
+    try {
+
+        const data = await toggleCustomerStatus(id);
+
+        toast.success(data.message);
+
+        fetchCustomers();
+
+    } catch {
+
+        toast.error("Failed to update status ❌");
+
+    }
+
+};
 
 
   return (
@@ -161,7 +198,7 @@ const Customer = () => {
                     type="switch"
                     id={`status-${c.id}`}
                     checked={c.status}
-                    onChange={() => toggleStatus(c.id)}
+                    onChange={() => handleToggleStatus(c.id)}
                    />
                  
                 </td>

@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\Login;
+
 
 class AuthController extends Controller
 {
@@ -25,7 +27,16 @@ class AuthController extends Controller
             ]);
         }
 
+                // Login the user
+            //Auth::login($user);
+
+            // Fire the Login event
+            event(new Login('web', $user, false));
+
+
         $token = $user->createToken('authToken')->plainTextToken;
+       
+
 
         return response()->json([
             'token' => $token,

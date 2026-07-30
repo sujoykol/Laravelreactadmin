@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -15,20 +15,30 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
-        $permission = Permission::create(['name' => $request->name]);
+        $permission = Permission::create([
+            'name' => $request->name
+        ]);
+
         return response()->json($permission);
     }
 
     public function update(Request $request, $id)
     {
         $permission = Permission::findOrFail($id);
-        $permission->update(['name' => $request->name]);
+
+        $permission->update([
+            'name' => $request->name
+        ]);
+
         return response()->json($permission);
     }
 
     public function destroy($id)
     {
         Permission::destroy($id);
-        return response()->json(['message' => 'Permission deleted']);
+
+        return response()->json([
+            'message' => 'Permission deleted'
+        ]);
     }
 }
