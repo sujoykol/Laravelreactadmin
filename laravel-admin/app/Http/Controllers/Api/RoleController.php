@@ -8,51 +8,103 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    /**
+     * Display all roles with permissions.
+     */
     public function index()
     {
-       
-    return response()->json(
-        Role::all()
-    );
-
-        //return response()->json(Role::with('permissions')->get());
+        return response()->json(
+            Role::with('permissions')->get()
+        );
     }
 
+    /**
+     * Create a new role.
+     */
     public function store(Request $request)
     {
-        $role = Role::create(['name' => $request->name]);
-        return response()->json($role);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name',
+        ]);
+
+        $role = Role::create($validated);
+
+        return response()->json([
+            'message' => 'Role created successfully',
+            'data' => $role,
+        ], 201);
     }
 
+    /**
+     * Update an existing role.
+     */
     public function update(Request $request, $id)
     {
         $role = Role::findOrFail($id);
-        $role->update(['name' => $request->name]);
-        return response()->json($role);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+        ]);
+
+        $role->update($validated);
+
+        return response()->json([
+            'message' => 'Role updated successfully',
+            'data' => $role,
+        ]);
     }
 
-    public function destroy($id){
+    /**
+     * Delete a role.
+     */
+    public function destroy($id)
+    {
         $role = Role::findOrFail($id);
 
         $role->delete();
 
         return response()->json([
-            'message' => 'Role deleted successfully'
+            'message' => 'Role deleted successfully',
         ]);
     }
 
+    /**
+     * Assign a permission to a role.
+     */
     public function givePermission(Request $request, $id)
     {
+        $validated = $request->validate([
+            'permission' => 'required|string|exists:permissions,name',
+        ]);
+
         $role = Role::findOrFail($id);
-        $role->givePermissionTo($request->permission);
-        return response()->json(['message' => 'Permission assigned']);
+
+        if (!$role->hasPermissionTo($validated['permission'])) {
+            $role->givePermissionTo($validated['permission']);
+        }
+
+        return response()->json([
+            'message' => 'Permission assigned successfully',
+        ]);
     }
 
+    /**
+     * Revoke a permission from a role.
+     */
     public function revokePermission(Request $request, $id)
     {
+        $validated = $request->validate([
+            'permission' => 'required|string|exists:permissions,name',
+        ]);
+
         $role = Role::findOrFail($id);
-        $role->revokePermissionTo($request->permission);
-        return response()->json(['message' => 'Permission revoked']);
+
+        if ($role->hasPermissionTo($validated['permission'])) {
+            $role->revokePermissionTo($validated['permission']);
+        }
+
+        return response()->json([
+            'message' => 'Permission revoked successfully',
+        ]);
     }
 }
-

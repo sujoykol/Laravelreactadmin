@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\UserController;
 
 Route::post('/login', [AuthController::class, 'login']);
-
+Route::get('/roles', [RoleController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
     // Roles
-    Route::get('/roles', [RoleController::class, 'index']);
+   
     Route::post('/roles', [RoleController::class, 'store']);
     Route::put('/roles/{id}', [RoleController::class, 'update']);
     Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
