@@ -20,6 +20,18 @@ export function AuthProvider({ children }) {
         // Store logged-in user
         setUser(data.user);
 
+          // Store roles and permissions
+        localStorage.setItem(
+            "roles",
+            JSON.stringify(data.roles || [])
+        );
+
+        localStorage.setItem(
+            "permissions",
+            JSON.stringify(data.permissions || [])
+        );
+
+
         return data;
     };
 

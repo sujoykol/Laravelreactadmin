@@ -2,19 +2,55 @@ export const setToken = (token) => {
     localStorage.setItem("access_token", token);
 };
 
-
-export const getToken = ()=>{
-
-    return localStorage.getItem(
-        "access_token"
-    );
-
+export const getToken = () => {
+    return localStorage.getItem("access_token");
 };
 
-
-export const clearToken = ()=>{
-
+export const clearToken = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
 
+    // Remove user data
+    localStorage.removeItem("user");
+    localStorage.removeItem("roles");
+    localStorage.removeItem("permissions");
+};
+
+/* ---------------- User ---------------- */
+
+export const setUser = (user) => {
+    localStorage.setItem("user", JSON.stringify(user));
+};
+
+export const getUser = () => {
+    return JSON.parse(localStorage.getItem("user"));
+};
+
+/* ---------------- Roles ---------------- */
+
+export const setRoles = (roles) => {
+    localStorage.setItem("roles", JSON.stringify(roles));
+};
+
+export const getRoles = () => {
+    return JSON.parse(localStorage.getItem("roles") || "[]");
+};
+
+/* ---------------- Permissions ---------------- */
+
+export const setPermissions = (permissions) => {
+    localStorage.setItem(
+        "permissions",
+        JSON.stringify(permissions)
+    );
+};
+
+export const getPermissions = () => {
+    return JSON.parse(
+        localStorage.getItem("permissions") || "[]"
+    );
+};
+
+export const hasPermission = (permission) => {
+    return getPermissions().includes(permission);
 };

@@ -13,11 +13,20 @@ use App\Http\Controllers\Api\UserController;
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::get('/users', [UserController::class, 'index'])
+        ->middleware('permission:users.view');
+
+    Route::post('/users', [UserController::class, 'store'])
+        ->middleware('permission:users.create');
+
+    Route::get('/users/{id}', [UserController::class, 'show'])
+        ->middleware('permission:users.view');
+
+    Route::put('/users/{id}', [UserController::class, 'update'])
+        ->middleware('permission:users.update');
+
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])
+        ->middleware('permission:users.delete');
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index']);

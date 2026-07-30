@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form } from "react-bootstrap";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import { hasPermission, getPermissions } from "../utils/permission";
 import {
     getUsers,
     createUser,
@@ -13,12 +14,24 @@ import {
 
 export default function Users() {
 
+  console.log(getPermissions());
+
+    console.log(
+        hasPermission("users.view")
+    );
+
+    console.log(
+        hasPermission("users.create")
+    );
+
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const token = localStorage.getItem("token");
   const [show, setShow] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "" });
+
+
 
   // Fetch users
   const fetchUsers = async () => {
@@ -121,9 +134,11 @@ export default function Users() {
   return (
     <div className="container mt-4">
       <h3>User Management</h3>
+      {hasPermission("users.create") && (
       <Button variant="primary" onClick={() => handleShow()}>
         + Add User
-      </Button>
+      </Button>   
+      )}
 
       <Table striped bordered hover className="mt-3">
         <thead>
@@ -143,12 +158,16 @@ export default function Users() {
               <td>{u.email}</td>
               <td>{u.roles?.map((r) => r.name).join(", ")}</td>
               <td>
+                {hasPermission("users.update") && (
                 <Button size="sm" variant="warning" onClick={() => handleShow(u)}>
                   Edit
-                </Button>{" "}
+                </Button>
+                )}
+                 {hasPermission("users.delete") && (
                 <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>
                   Delete
                 </Button>
+                 )}
               </td>
             </tr>
           ))}

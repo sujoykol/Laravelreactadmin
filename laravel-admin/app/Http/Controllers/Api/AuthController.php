@@ -13,36 +13,34 @@ use Illuminate\Auth\Events\Login;
 class AuthController extends Controller
 {
     public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
-        $user = User::where('email', $request->email)->first();
+    $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The credentials are incorrect.'],
-            ]);
-        }
-
-                // Login the user
-            //Auth::login($user);
-
-            // Fire the Login event
-            event(new Login('web', $user, false));
-
-
-        $token = $user->createToken('authToken')->plainTextToken;
-       
-
-
-        return response()->json([
-            'token' => $token,
-            'user'  => $user
+    if (! $user || ! Hash::check($request->password, $user->password)) {
+        throw ValidationException::withMessages([
+            'email' => ['The credentials are incorrect.'],
         ]);
     }
+
+    event(new Login('web', $user, false));
+
+    $token = $user->createToken('authToken')->plainTextToken;
+
+    // Load roles
+    $user->load('roles');
+
+    return response()->json([
+        'token' => $token,
+        'user' => $user,
+        'roles' => $user->getRoleNames(),
+        'permissions' => $user->getAllPermissions()->pluck('name'),
+    ]);
+}
 
     public function logout(Request $request)
     {
