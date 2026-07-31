@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Login;
+use App\Services\ActivityLogService;
 
 
 class AuthController extends Controller
@@ -34,6 +35,13 @@ class AuthController extends Controller
     // Load roles
     $user->load('roles');
 
+    ActivityLogService::log(
+    'Authentication',
+    'LOGIN',
+    "User {$user->name} logged in",
+    $user->id
+    );
+
     return response()->json([
         'token' => $token,
         'user' => $user,
@@ -44,7 +52,15 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+
+        ActivityLogService::log(
+        'Authentication',
+        'LOGOUT',
+        "User {$request->user()->name} logged out"
+        );
+
         $request->user()->tokens()->delete();
+
         return response()->json(['message' => 'Logged out']);
     }
 

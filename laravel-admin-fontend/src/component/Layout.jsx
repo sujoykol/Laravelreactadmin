@@ -2,7 +2,8 @@ import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, Outlet } from "react-router-dom";
 import { useState } from "react";
-import { hasPermission } from "../utils/permission";
+import Sidebar from "./Sidebar";
+
 
 export default function Layout() {
   const { logout } = useContext(AuthContext);
@@ -12,68 +13,9 @@ export default function Layout() {
 
 <div className="d-flex" style={{ height: "100vh" }}>
       {/* Sidebar */}
-      <div
-        className={`bg-dark text-white p-3 ${isSidebarOpen ? "d-block" : "d-none"}`}
-        style={{ width: "250px" }}
-      >
-        <h4 className="mb-4">Admin Panel</h4>
-        <ul className="nav flex-column">
-          <li className="nav-item">
-            <Link to="/dashboard" className="nav-link text-white">
-              <i className="fas fa-home me-2"></i> Dashboard
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/categories" className="nav-link text-white">
-              <i className="fas fa-users me-2"></i> Categories
-            </Link>
-          </li>
-            <li className="nav-item">
-            <Link to="/products" className="nav-link text-white">
-              <i className="fas fa-users me-2"></i> Products
-            </Link>
-          </li>
-          
-            <li className="nav-item">
-            <Link to="/sliders" className="nav-link text-white">
-              <i className="fas fa-users me-2"></i> Sliders
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/customers" className="nav-link text-white">
-              <i className="fas fa-users me-2"></i> Customers
-            </Link>
-          </li>
-            {hasPermission("roles.view") && (
-          <li className="nav-item">
-          <Link to="/roles" className="nav-link text-white">
-                  <i className="fas fa-user-shield me-2"></i> Roles
-                </Link>
-              </li>
-            )}
-
-
-        {hasPermission("permissions.view") && (
-          <li className="nav-item">
-            <Link to="/permissions" className="nav-link text-white">
-              <i className="fas fa-key me-2"></i> Permissions
-            </Link>
-          </li>
-        )}
-
-           <li className="nav-item">
-            <Link to="/users" className="nav-link text-white">
-              <i className="fas fa-users me-2"></i> Users
-            </Link>
-          </li>
-          
-          <li className="nav-item">
-            <Link to="/changepassword" className="nav-link text-white">
-              <i className="fas fa-cog me-2"></i> Settings
-            </Link>
-          </li>
-        </ul>
-      </div>
+       <Sidebar
+    isSidebarOpen={isSidebarOpen}
+/>
 
       {/* Main Content */}
       <div className="flex-grow-1 bg-light">

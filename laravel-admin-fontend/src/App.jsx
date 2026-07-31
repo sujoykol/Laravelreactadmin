@@ -15,6 +15,8 @@ import Role from "./pages/Roles";
 import Permissions from "./pages/Permissions";
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "./component/Layout";
+import ActivityLogs from "./pages/ActivityLogs";
+
 
 import { Toaster } from "react-hot-toast";
 
@@ -40,6 +42,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/products/new" element={<ProductForm />} />
             <Route path="/products/edit/:id" element={<ProductForm />} />
+            <Route path="/activity-logs" element={<ActivityLogs />}/>
           </Route>
         </Routes>
       </Router>

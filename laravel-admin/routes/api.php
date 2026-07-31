@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ActivityLogController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -60,4 +61,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])
+        ->middleware('permission:activitylogs.view');
+
+    Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show'])
+        ->middleware('permission:activitylogs.view');
 });
