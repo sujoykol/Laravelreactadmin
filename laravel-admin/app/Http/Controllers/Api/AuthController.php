@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Login;
 use App\Services\ActivityLogService;
+use Illuminate\Support\Str;
+use App\Models\RefreshToken;
 
 
 class AuthController extends Controller
@@ -30,7 +32,17 @@ class AuthController extends Controller
 
     event(new Login('web', $user, false));
 
-    $token = $user->createToken('authToken')->plainTextToken;
+    $accessToken = $user->createToken('authToken')->plainTextToken;
+    $refreshToken = Str::random(64);
+    RefreshToken::create([
+
+        'user_id'=>$user->id,
+
+        'token'=>hash('sha256',$refreshToken),
+
+        'expires_at'=>now()->addDays(7),
+
+    ]);
 
     // Load roles
     $user->load('roles');
@@ -43,25 +55,87 @@ class AuthController extends Controller
 );
 
     return response()->json([
-        'token' => $token,
-        'user' => $user,
-        'roles' => $user->getRoleNames(),
-        'permissions' => $user->getAllPermissions()->pluck('name'),
+
+    'access_token'=>$accessToken,
+
+    'refresh_token'=>$refreshToken,
+
+    'expires_in'=>900,
+
+    'user'=>$user,
+
+    'roles'=>$user->getRoleNames(),
+
+    'permissions'=>$user->getAllPermissions()->pluck('name'),
+
     ]);
 }
+    public function refresh(Request $request){
 
-    public function logout(Request $request)
-    {
+        $request->validate([
+            'refresh_token'=>'required'
+        ]);
 
-        ActivityLogService::log(
-        'Authentication',
-        'LOGOUT',
-        "User {$request->user()->name} logged out"
-        );
 
-        $request->user()->tokens()->delete();
+        $token = RefreshToken::where(
+            'token',
+            hash('sha256',$request->refresh_token)
+        )
+        ->where('revoked',false)
+        ->where('expires_at','>',now())
+        ->first();
 
-        return response()->json(['message' => 'Logged out']);
+
+        if(!$token){
+
+        return response()->json([
+            'message'=>'Invalid refresh token'
+        ],401);
+
+        }
+
+
+        $user = $token->user;
+
+
+        // optional: remove old access tokens
+
+        $user->tokens()->delete();
+
+
+        $newAccessToken = $user->createToken(
+            'authToken'
+        )->plainTextToken;
+
+
+        return response()->json([
+
+        'access_token'=>$newAccessToken,
+
+        'expires_in'=>900
+
+        ]);
+
+}
+
+    public function logout(Request $request){
+    $user = $request->user();
+
+
+    // Remove access token
+    $user->currentAccessToken()->delete();
+
+
+    // Revoke refresh tokens
+    $user->refreshTokens()
+         ->update([
+             'revoked'=>true
+         ]);
+
+
+    return response()->json([
+        'message'=>'Logged out successfully'
+    ]);
     }
 
     public function me(Request $request)

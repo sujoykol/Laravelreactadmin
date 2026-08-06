@@ -6,83 +6,105 @@ import toast from "react-hot-toast";
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
+
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user");
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
 
     const login = async (email, password) => {
+
         const data = await loginUser({
             email,
             password,
         });
 
-        // Store Sanctum token
-        setToken(data.token);
+        // Store access & refresh tokens
+        setToken(
+            data.access_token,
+            data.refresh_token
+        );
 
-        // Store logged-in user
-        setUser(data.user);
+        // Store user
+        localStorage.setItem(
+            "user",
+            JSON.stringify(data.user)
+        );
 
-          // Store roles and permissions
+        // Store roles
         localStorage.setItem(
             "roles",
             JSON.stringify(data.roles || [])
         );
 
+        // Store permissions
         localStorage.setItem(
             "permissions",
             JSON.stringify(data.permissions || [])
         );
 
+        setUser(data.user);
 
         return data;
     };
 
     const logout = () => {
+
         clearToken();
+
         setUser(null);
+
     };
 
     const changeUserPassword = async (
-    currentPassword,
-    newPassword,
-    confirmPassword
-) => {
-    try {
-        const response = await changePassword({
-            old_password: currentPassword,
-            new_password: newPassword,
-            new_password_confirmation: confirmPassword,
-        });
+        currentPassword,
+        newPassword,
+        confirmPassword
+    ) => {
 
-        toast.success(response.message || "Password changed successfully");
+        try {
 
-        return {
-            success: true,
-            data: response,
-        };
-
-    } catch (error) {
-
-        const response = error.response?.data;
-
-        if (response?.errors) {
-            Object.values(response.errors).forEach((messages) => {
-                toast.error(messages[0]);
+            const response = await changePassword({
+                old_password: currentPassword,
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword,
             });
-        } 
-        else if (response?.message) {
-            toast.error(response.message);
-        } 
-        else {
-            toast.success("Failed to change password");
+
+            toast.success(
+                response.message || "Password changed successfully"
+            );
+
+            return {
+                success: true,
+                data: response,
+            };
+
+        } catch (error) {
+
+            const response = error.response?.data;
+
+            if (response?.errors) {
+
+                Object.values(response.errors).forEach((messages) => {
+                    toast.error(messages[0]);
+                });
+
+            } else if (response?.message) {
+
+                toast.error(response.message);
+
+            } else {
+
+                toast.error("Failed to change password");
+
+            }
+
+            return {
+                success: false,
+                error: response,
+            };
         }
-
-        return {
-            success: false,
-            error: response,
-        };
-    }
-};
-
-
+    };
 
     return (
         <AuthContext.Provider

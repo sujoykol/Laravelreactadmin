@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ActivityLogController;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/refresh',[AuthController::class,'refresh']);    
 
 Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users', [UserController::class, 'index'])
@@ -28,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::delete('/users/{id}', [UserController::class, 'destroy'])
         ->middleware('permission:users.delete');
+
+   
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index']);

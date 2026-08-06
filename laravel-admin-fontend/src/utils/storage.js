@@ -1,21 +1,18 @@
-export const setToken = (token) => {
-    localStorage.setItem("access_token", token);
-};
 
-export const getToken = () => {
-    return localStorage.getItem("access_token");
-};
 
 export const clearToken = () => {
+
     localStorage.removeItem("access_token");
+
     localStorage.removeItem("refresh_token");
 
-    // Remove user data
     localStorage.removeItem("user");
-    localStorage.removeItem("roles");
-    localStorage.removeItem("permissions");
-};
 
+    localStorage.removeItem("roles");
+
+    localStorage.removeItem("permissions");
+
+};
 /* ---------------- User ---------------- */
 
 export const setUser = (user) => {
