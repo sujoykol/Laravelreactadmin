@@ -9,7 +9,7 @@ import {
     deleteCustomer,
     toggleCustomerStatus,
 } from "../services/customerService";
-
+import { getImageUrl } from "../utils/image";
 const Customer = () => {
   const { user } = useContext(AuthContext);
   const [customers, setCustomers] = useState([]);
@@ -181,12 +181,8 @@ const fetchCustomers = async () => {
                 <td>{c.id}</td>
                 <td>
                   {c.image && (
-                    <Image
-                      src={`http://127.0.0.1:8000/storage/${c.image}`}
-                      width={50}
-                      height={50}
-                      rounded
-                    />
+                     <img src={getImageUrl(c.image)} alt="" width="50"/>
+                  
                   )}
                 </td>
                 <td>{c.name}</td>

@@ -11,25 +11,25 @@ class ObjectStorageService
     /**
      * Upload image to OCI Object Storage
      */
-    public function upload(UploadedFile $file): string
-    {
-        $objectName = 'products/' . $file->hashName();
+    public function upload(UploadedFile $file, string $folder = 'products'): string
+{
+    $objectName = $folder . '/' . $file->hashName();
 
-        $command = sprintf(
-            '/home/sujoy/bin/oci os object put --bucket-name %s --file %s --name %s --force 2>&1',
-            escapeshellarg($this->bucket),
-            escapeshellarg($file->getRealPath()),
-            escapeshellarg($objectName)
-        );
+    $command = sprintf(
+        '/home/sujoy/bin/oci os object put --bucket-name %s --file %s --name %s --force 2>&1',
+        escapeshellarg($this->bucket),
+        escapeshellarg($file->getRealPath()),
+        escapeshellarg($objectName)
+    );
 
-        exec($command, $output, $status);
+    exec($command, $output, $status);
 
-        if ($status !== 0) {
-            throw new \Exception(implode("\n", $output));
-        }
-
-        return $objectName;
+    if ($status !== 0) {
+        throw new \Exception(implode("\n", $output));
     }
+
+    return $objectName;
+}
 
     /**
      * Delete image from OCI Object Storage

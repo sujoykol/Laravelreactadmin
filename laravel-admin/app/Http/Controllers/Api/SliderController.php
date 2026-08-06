@@ -5,13 +5,21 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Slider;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\SliderService;
+
 
 class SliderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+     private SliderService $sliderService;
+
+    public function __construct(SliderService $sliderService)
+    {
+        $this->sliderService = $sliderService;
+    }
+
     public function index()
     {
         return Slider::paginate(10);
@@ -22,19 +30,15 @@ class SliderController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string',
             'description' => 'nullable|string',
             'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $path = $request->file('image')->store('sliders', 'public');
+        //$path = $request->file('image')->store('sliders', 'public');
 
-        $slider = Slider::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'image' => $path,
-        ]);
+        $slider = $this->sliderService->create($validated);
 
         return response()->json(['message' => 'Slider created successfully', 'slider' => $slider], 201);
     }
@@ -53,20 +57,16 @@ class SliderController extends Controller
      */
     public function update(Request $request, Slider $slider)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $data = $request->only(['title', 'description', 'status']);
+        //$slider = $request->only(['title', 'description', 'status']);
 
-        if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($slider->image);
-            $data['image'] = $request->file('image')->store('sliders', 'public');
-        }
-
-        $slider->update($data);
+        $slider = $this->sliderService->update($slider, $validated);
+        
 
         return response()->json(['message' => 'Slider updated successfully', 'slider' => $slider]);
     }
@@ -76,15 +76,13 @@ class SliderController extends Controller
      */
     public function destroy(Slider $slider)
     {
-        Storage::disk('public')->delete($slider->image);
-        $slider->delete();
+       $this->sliderService->delete($slider);
 
         return response()->json(['message' => 'Slider deleted successfully']);
     }
     public function toggleStatus(Slider $slider)
     {
-        $slider->status = !$slider->status; // flip status
-        $slider->save();
+        $slider = $this->sliderService->toggleStatus($slider);
 
         return response()->json([
             'message' => 'Status updated successfully',

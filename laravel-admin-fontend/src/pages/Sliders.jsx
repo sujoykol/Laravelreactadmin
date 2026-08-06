@@ -6,6 +6,7 @@ import {
     deleteSlider,
     toggleSliderStatus
 } from "../services/sliderService";
+import { getImageUrl } from "../utils/image";
 
 export default function Sliders() {
   const [sliders, setSliders] = useState([]);
@@ -100,7 +101,7 @@ export default function Sliders() {
                 <td>{s.description}</td>
                 <td>
                   {s.image ? (
-                    <img src={`http://127.0.0.1:8000/storage/${s.image}`} alt="" width="50" />
+                  <img src={getImageUrl(s.image)} alt="" width="50"/>
                   ) : "No Image"}
                 </td>
                   <td>
