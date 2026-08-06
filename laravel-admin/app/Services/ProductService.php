@@ -1,15 +1,19 @@
 <?php
-
 namespace App\Services;
-
 use App\Models\Product;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ObjectStorageService;
 
 class ProductService
 {
   
+    private ObjectStorageService $objectStorageService;
+
+    public function __construct(ObjectStorageService $objectStorageService)
+    {
+        $this->objectStorageService = $objectStorageService;
+    }
     public function getProducts()
     {
    /* $key = 'products_' . md5(request()->fullUrl());
@@ -61,8 +65,7 @@ class ProductService
         if (isset($data['image'])) {
 
             if ($product->image) {
-                Storage::disk('public')
-                    ->delete($product->image);
+                $this->objectStorageService->delete($product->image);
             }
 
             $data['image'] = $this->uploadImage(
@@ -83,8 +86,7 @@ class ProductService
     {
         if ($product->image) {
 
-            Storage::disk('public')
-                ->delete($product->image);
+           $this->objectStorageService->delete($product->image);
         }
 
 
@@ -109,10 +111,7 @@ class ProductService
 
     private function uploadImage(UploadedFile $image)
     {
-        return $image->store(
-            'products',
-            'public'
-        );
+        return $this->objectStorageService->upload($image);
     }
     private function clearCache(?Product $product = null)
     {

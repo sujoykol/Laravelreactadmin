@@ -34,13 +34,13 @@ class AuthController extends Controller
 
     // Load roles
     $user->load('roles');
-
     ActivityLogService::log(
     'Authentication',
     'LOGIN',
     "User {$user->name} logged in",
+    null,
     $user->id
-    );
+);
 
     return response()->json([
         'token' => $token,

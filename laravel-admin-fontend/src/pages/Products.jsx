@@ -7,6 +7,7 @@ import {
     deleteProduct,
     toggleProductStatus,
 } from "../services/productService";
+import { getImageUrl } from "../utils/image"
 
 export default function Products() {
     const [products, setProducts] = useState([]);
@@ -83,7 +84,8 @@ export default function Products() {
                 <td>{p.description}</td>
                 <td>
                   {p.image ? (
-                    <img src={`http://127.0.0.1:8000/storage/${p.image}`} alt="" width="50" />
+                    
+                    <img src={getImageUrl(p.image)} alt="" width="50"/>
                   ) : "No Image"}
                 </td>
                  <td>
