@@ -20,17 +20,21 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withMiddleware(function (Middleware $middleware) {
 
-        $middleware->group('api', [
-            EnsureFrontendRequestsAreStateful::class,
-            SubstituteBindings::class,
-        ]);
+    $middleware->redirectGuestsTo(function ($request) {
+        return null;
+    });
 
-        $middleware->alias([
-            'role' => RoleMiddleware::class,
-            'permission' => PermissionMiddleware::class,
-            'role_or_permission' => RoleOrPermissionMiddleware::class,
-        ]);
-    })
+    $middleware->group('api', [
+        EnsureFrontendRequestsAreStateful::class,
+        SubstituteBindings::class,
+    ]);
+
+    $middleware->alias([
+        'role' => RoleMiddleware::class,
+        'permission' => PermissionMiddleware::class,
+        'role_or_permission' => RoleOrPermissionMiddleware::class,
+    ]);
+})
 
     ->withExceptions(function (Exceptions $exceptions) {
         //
